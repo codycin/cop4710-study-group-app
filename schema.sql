@@ -1,0 +1,8 @@
+DROP TABLE IF EXISTS student;
+
+CREATE TABLE student (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    major TEXT NOT NULL
+);
