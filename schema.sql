@@ -1,8 +1,10 @@
-DROP TABLE IF EXISTS student;
+DROP TABLE IF EXISTS students;
 
-CREATE TABLE student (
+CREATE TABLE IF NOT EXISTS students (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
     email TEXT NOT NULL UNIQUE,
-    major TEXT NOT NULL
+    password TEXT NOT NULL,
+    major TEXT,
+    role TEXT,
+    group_size_pref INTEGER NOT NULL
 );
