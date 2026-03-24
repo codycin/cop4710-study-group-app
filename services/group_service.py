@@ -4,7 +4,7 @@ from db import get_db_connection
 
 def search_groups(subject, course_number):
     conn = get_db_connection()
-    cursor = conn.cusor()
+    cursor = conn.cursor()
 
     query = """
         SELECT sg.id, c.subject_code, c.course_number, sg.max_size
