@@ -1,0 +1,39 @@
+{% extends "base.html" %} {% block title %}Enroll{% endblock %} {% block content
+%}
+<div class="container mt-4">
+  <h1 class="mb-4">Courses</h1>
+
+  {% if courses %}
+  <div class="row g-3 mb-4">
+    {% for course in courses %}
+    <div class="col-md-6 col-lg-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title">{{ course["title"] }}</h5>
+          <p class="card-text text-muted mb-1">Code: {{ course["code"] }}</p>
+          <p class="card-text">Course ID: {{ course["id"] }}</p>
+          <form
+            method="POST"
+            action="{{ url_for('enrollment.enroll_student_endpoint') }}"
+            class="ms-3"
+          >
+            <input type="hidden" name="course_id" value="{{ course['id'] }}" />
+            <button type="submit" class="btn btn-outline-success btn-sm">
+              Enroll
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="alert alert-info">No courses found.</div>
+  {% endif %}
+  <a
+    class="btn btn-outline-success"
+    href="{{ url_for('course.create_course_endpoint') }}"
+    >Add Course</a
+  >
+</div>
+{% endblock %}

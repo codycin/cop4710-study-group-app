@@ -1,6 +1,7 @@
 from db import get_db_connection
 import bcrypt
 import sqlite3
+from flask import session
 
 def register(email, password, major, role, groupSizePref):
     if len(password) < 10:
@@ -20,7 +21,7 @@ def register(email, password, major, role, groupSizePref):
 
         cursor.execute(
             """
-            INSERT INTO students (email, password, major, role, group_size_pref)
+            INSERT INTO students (email, password_hash, major, role, group_size_pref)
             VALUES (?, ?, ?, ?, ?)
             """,
             (email, hashed_password, major, role, groupSizePref)
@@ -28,6 +29,7 @@ def register(email, password, major, role, groupSizePref):
 
         conn.commit()
         student_id = cursor.lastrowid
+
 
         return True, "User created successfully", student_id
 
@@ -38,16 +40,13 @@ def register(email, password, major, role, groupSizePref):
         cursor.close()
         conn.close()
 
-from db import get_db_connection
-import bcrypt
-
 def login(email, password):
     conn = get_db_connection()
     cursor = conn.cursor()
 
     try:
         cursor.execute(
-            "SELECT id, password FROM students WHERE email = ?",
+            "SELECT id, password_hash FROM students WHERE email = ?",
             (email,)
         )
 
@@ -58,6 +57,7 @@ def login(email, password):
 
         student_id = result[0]
         stored_hash = result[1]
+
 
         if bcrypt.checkpw(password.encode("utf-8"), stored_hash.encode("utf-8")):
             return True, "Login successful", student_id

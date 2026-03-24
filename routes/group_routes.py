@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from services.group_service import search_groups, join_group
 
 group_bp = Blueprint("groups", __name__,url_prefix="/groups")
@@ -13,10 +13,10 @@ def list_groups():
 
 @group_bp.route("/", methods=["POST"])
 def join():
-    student_id = request.form.get("student_id")
+    user_id = session.get("user_id")
     group_id = request.form.get("group_id")
 
-    success, message = join_group(student_id, group_id)
+    success, message = join_group(user_id, group_id)
 
     flash(message)
     return redirect(url_for("groups.list_groups"))

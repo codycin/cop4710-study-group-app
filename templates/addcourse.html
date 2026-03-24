@@ -1,0 +1,46 @@
+{% extends "base.html" %} {% block title %}Add Course{% endblock %} {% block
+content %}
+<div class="row justify-content-center">
+  <div class="col-md-6 col-lg-5">
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <h2 class="text-center mb-4">Login</h2>
+
+        <form
+          method="POST"
+          action="{{ url_for('course.create_course_endpoint') }}"
+        >
+          <!-- Email -->
+          <div class="mb-3">
+            <label class="form-label">Title</label>
+            <input
+              type="title"
+              name="title"
+              class="form-control"
+              placeholder="Enter the class name"
+              required
+            />
+          </div>
+
+          <!-- Password -->
+          <div class="mb-3">
+            <label class="form-label">Code</label>
+            <input
+              type="code"
+              name="code"
+              class="form-control"
+              placeholder="Enter the class code"
+              required
+            />
+          </div>
+
+          <!-- Submit -->
+          <div class="d-grid">
+            <button type="submit" class="btn btn-primary">Add</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
