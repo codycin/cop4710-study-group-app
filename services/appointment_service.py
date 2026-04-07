@@ -1,1 +1,254 @@
 from db import get_db_connection
+import sqlite3
+from flask import session
+
+
+def create_appointment(title, time, end_time, group_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        student_id = session.get("user_id")
+        if not student_id:
+            return False, "You must be logged in to create an appointment.", None
+
+        if not title or not time or not end_time or not group_id:
+            return False, "All fields are required.", None
+
+        cursor.execute(
+            "SELECT id, course_id FROM study_groups WHERE id = ?",
+            (group_id,)
+        )
+        group = cursor.fetchone()
+
+        if not group:
+            return False, "Group not found.", None
+
+        course_id = group["course_id"]
+
+        cursor.execute(
+            """
+            SELECT 1
+            FROM group_members
+            WHERE group_id = ? AND student_id = ?
+            """,
+            (group_id, student_id)
+        )
+        membership = cursor.fetchone()
+
+        if not membership:
+            return False, "You can only create appointments for groups you belong to.", None
+
+        cursor.execute(
+            """
+            INSERT INTO appointments (title, time, end_time, leader_id, course_id, group_id)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (title, time, end_time, student_id, course_id, group_id)
+        )
+        appointment_id = cursor.lastrowid
+
+        cursor.execute(
+            """
+            INSERT INTO appointment_attendees (appointment_id, student_id)
+            VALUES (?, ?)
+            """,
+            (appointment_id, student_id)
+        )
+
+        conn.commit()
+        return True, "Appointment created successfully.", appointment_id
+
+    except sqlite3.IntegrityError:
+        return False, "An error occurred while creating the appointment.", None
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def get_group_appointments(student_id, search_term=""):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    search_term = (search_term or "").strip()
+
+    query = """
+        SELECT DISTINCT
+            a.id,
+            a.title,
+            a.time,
+            a.end_time,
+            a.leader_id,
+            a.course_id,
+            a.group_id,
+            sg.name AS group_name,
+            c.code AS course_code,
+            c.title AS course_title,
+            (
+                SELECT COUNT(*)
+                FROM appointment_attendees aa2
+                WHERE aa2.appointment_id = a.id
+            ) AS member_count,
+            CASE
+                WHEN EXISTS (
+                    SELECT 1
+                    FROM appointment_attendees aa3
+                    WHERE aa3.appointment_id = a.id
+                      AND aa3.student_id = ?
+                ) THEN 1
+                ELSE 0
+            END AS is_joined
+        FROM appointments a
+        JOIN study_groups sg ON a.group_id = sg.id
+        JOIN courses c ON a.course_id = c.id
+        JOIN group_members gm ON gm.group_id = a.group_id
+        WHERE gm.student_id = ?
+    """
+
+    params = [student_id, student_id]
+
+    if search_term:
+        query += """
+            AND (
+                a.title LIKE ?
+                OR sg.name LIKE ?
+                OR c.code LIKE ?
+                OR c.title LIKE ?
+            )
+        """
+        like_value = f"%{search_term}%"
+        params.extend([like_value, like_value, like_value, like_value])
+
+    query += """
+        ORDER BY a.time DESC, a.end_time DESC
+    """
+
+    cursor.execute(query, params)
+    rows = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+    return rows
+
+def join_appointment(appointment_id, student_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        if not student_id:
+            return False, "You must be logged in to join an appointment."
+
+        if not appointment_id:
+            return False, "Appointment ID is required."
+
+        cursor.execute(
+            """
+            SELECT id, title, group_id
+            FROM appointments
+            WHERE id = ?
+            """,
+            (appointment_id,)
+        )
+        appointment = cursor.fetchone()
+
+        if not appointment:
+            return False, "Appointment not found."
+
+        cursor.execute(
+            """
+            SELECT 1
+            FROM group_members
+            WHERE group_id = ? AND student_id = ?
+            """,
+            (appointment["group_id"], student_id)
+        )
+        group_membership = cursor.fetchone()
+
+        if not group_membership:
+            return False, "You can only join appointments for groups you belong to."
+
+        cursor.execute(
+            """
+            SELECT 1
+            FROM appointment_attendees
+            WHERE appointment_id = ? AND student_id = ?
+            """,
+            (appointment_id, student_id)
+        )
+        existing_membership = cursor.fetchone()
+
+        if existing_membership:
+            return False, "You have already joined this appointment."
+
+        cursor.execute(
+            """
+            INSERT INTO appointment_attendees (appointment_id, student_id)
+            VALUES (?, ?)
+            """,
+            (appointment_id, student_id)
+        )
+
+        conn.commit()
+        return True, "You joined the appointment successfully."
+
+    except sqlite3.IntegrityError:
+        return False, "An error occurred while joining the appointment."
+
+    finally:
+        cursor.close()
+        conn.close()
+        
+def leave_appointment(appointment_id, student_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        if not student_id:
+            return False, "You must be logged in to leave a group."
+
+        cursor.execute(
+            "SELECT id, title FROM appointments WHERE id = ?",
+            (appointment_id,)
+        )
+        appointment = cursor.fetchone()
+
+        if not appointment:
+            return False, "Appointment not found."
+
+        cursor.execute(
+            "SELECT 1 FROM students WHERE id = ?",
+            (student_id,)
+        )
+        student = cursor.fetchone()
+
+        if not student:
+            return False, "Student not found."
+
+        cursor.execute(
+            """
+            SELECT 1
+            FROM appointment_attendees
+            WHERE appointment_id = ? AND student_id = ?
+            """,
+            (appointment_id, student_id)
+        )
+        membership = cursor.fetchone()
+
+        if not membership:
+            return False, "You are not in this group."
+
+        cursor.execute(
+            """
+            DELETE FROM appointment_attendees
+            WHERE appointment_id = ? AND student_id = ?
+            """,
+            (appointment_id, student_id)
+        )
+
+        conn.commit()
+        return True, "You left the appointment."
+
+    finally:
+        cursor.close()
+        conn.close()

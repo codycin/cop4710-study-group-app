@@ -1,12 +1,12 @@
-{% extends "base.html" %} {% block title %}Login{% endblock %} {% block content
-%}
+{% extends "base.html" %} {% block title %}Register{% endblock %} {% block
+content %}
 <div class="row justify-content-center">
   <div class="col-md-6 col-lg-5">
     <div class="card shadow-sm">
       <div class="card-body p-4">
-        <h2 class="text-center mb-4">Login</h2>
+        <h2 class="text-center mb-4">Register</h2>
 
-        <form method="POST" action="{{ url_for('auth.login_endpoint') }}">
+        <form method="POST" action="{{ url_for('auth.register_endpoint') }}">
           <!-- Email -->
           <div class="mb-3">
             <label class="form-label">Email</label>
@@ -30,18 +30,38 @@
               required
             />
           </div>
+          <div class="mb-3">
+            <label class="form-label">Major</label>
+            <input
+              type="text"
+              name="major"
+              class="form-control"
+              placeholder="Enter your major"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Group Size Preference</label>
+            <input
+              type="text"
+              name="groupSizePref"
+              class="form-control"
+              placeholder="Enter your group size preference"
+              required
+            />
+          </div>
 
           <!-- Submit -->
           <div class="d-grid">
-            <button type="submit" class="btn btn-primary">Login</button>
+            <button type="submit" class="btn btn-primary">Register</button>
           </div>
         </form>
 
         <!-- Optional link -->
         <div class="text-center mt-3">
           <small>
-            Don't have an account?
-            <a href="{{ url_for('auth.register_endpoint') }}">Register</a>
+            Already have an account?
+            <a href="{{ url_for('auth.login_endpoint') }}">Login</a>
           </small>
         </div>
       </div>

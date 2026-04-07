@@ -12,10 +12,9 @@ def register_endpoint():
     email = request.form.get("email")
     password = request.form.get("password")
     major = request.form.get("major")
-    role = request.form.get("role")
     group_size_pref = request.form.get("groupSizePref")
 
-    if not email or not password or not major or not role or group_size_pref is None:
+    if not email or not password or not major or group_size_pref is None:
         flash("Failed, missing fields","danger")
         return redirect(url_for("auth.register_endpoint"))
 
@@ -29,7 +28,7 @@ def register_endpoint():
         email=email,
         password=password,
         major=major,
-        role=role,
+        role="member",
         groupSizePref=group_size_pref
     )
 
@@ -39,7 +38,7 @@ def register_endpoint():
     
     session["user_id"] = student_id
 
-    return redirect(url_for("courses"))
+    return redirect(url_for("courses.get_courses_page"))
 
 @auth_bp.route("/login", methods=["GET","POST"])
 def login_endpoint():
@@ -64,5 +63,11 @@ def login_endpoint():
 
     flash("Logged in successfully!", "success")
     return redirect(url_for("course.get_courses_page"))
+
+@auth_bp.route("/logout")
+def logout():
+    session.pop("user_id", None)
+    flash("Logged out successfully!", "success")
+    return redirect(url_for("auth.login_endpoint"))
 
 

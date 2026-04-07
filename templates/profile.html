@@ -1,0 +1,53 @@
+{% extends "base.html" %} {% block title %}My Profile{% endblock %} {% block
+content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow-sm">
+        <div
+          class="card-header d-flex justify-content-between align-items-center"
+        >
+          <h1 class="h4 mb-0">My Profile</h1>
+          <a
+            href="{{ url_for('profile.edit_profile') }}"
+            class="btn btn-primary btn-sm"
+          >
+            Edit Profile
+          </a>
+        </div>
+        <div class="card-body">
+          <div class="row mb-3">
+            <div class="col-sm-4 fw-bold">Student ID</div>
+            <div class="col-sm-8">{{ user["id"] }}</div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-sm-4 fw-bold">Username</div>
+            <div class="col-sm-8">{{ user["username"] }}</div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-sm-4 fw-bold">Email</div>
+            <div class="col-sm-8">{{ user["email"] }}</div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-sm-4 fw-bold">Major</div>
+            <div class="col-sm-8">{{ user["major"] or "Not set" }}</div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-sm-4 fw-bold">Role</div>
+            <div class="col-sm-8">{{ user["role"] or "Not set" }}</div>
+          </div>
+
+          <div class="row">
+            <div class="col-sm-4 fw-bold">Preferred Group Size</div>
+            <div class="col-sm-8">{{ user["group_size_pref"] }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

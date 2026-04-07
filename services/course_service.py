@@ -23,6 +23,8 @@ def createCourse(title,code):
     finally:
         cursor.close()
         conn.close()
+
+
         
 
 

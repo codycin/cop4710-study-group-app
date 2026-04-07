@@ -13,6 +13,12 @@ def create_tables():
 
     cursor.execute("PRAGMA foreign_keys = ON;")
    #Students
+   # Drop dependent table first
+    cursor.execute("DROP TABLE IF EXISTS appointment_attendees")
+
+# Then drop appointments
+    cursor.execute("DROP TABLE IF EXISTS appointments")
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS students (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -20,7 +26,8 @@ def create_tables():
             password_hash TEXT NOT NULL,
             major TEXT,
             role TEXT,
-            group_size_pref INTEGER NOT NULL
+            group_size_pref INTEGER NOT NULL,
+            username TEXT
         )
     """)
     #Courses
@@ -35,12 +42,16 @@ def create_tables():
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS appointments (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
             time TEXT NOT NULL,
             end_time TEXT NOT NULL,
             leader_id INTEGER NOT NULL,
             course_id INTEGER NOT NULL,
+            group_id INTEGER NOT NULL,
             FOREIGN KEY (leader_id) REFERENCES students(id),
-            FOREIGN KEY (course_id) REFERENCES courses(id)
+            FOREIGN KEY (course_id) REFERENCES courses(id),
+            FOREIGN KEY (group_id) REFERENCES study_groups(id)
+
         )
     """)
     #Enrollments in courses

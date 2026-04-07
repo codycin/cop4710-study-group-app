@@ -67,3 +67,28 @@ def login(email, password):
     finally:
         cursor.close()
         conn.close()
+
+def get_user_by_id(user_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute(
+            "SELECT id, email, major, role, group_size_pref FROM students WHERE id = ?",
+            (user_id,)
+        )
+        user = cursor.fetchone()
+
+        if user:
+            return {
+                "id": user[0],
+                "email": user[1],
+                "major": user[2],
+                "role": user[3],
+                "group_size_pref": user[4]
+            }
+        return None
+
+    finally:
+        cursor.close()
+        conn.close()
