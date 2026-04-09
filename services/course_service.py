@@ -24,6 +24,44 @@ def createCourse(title,code):
         cursor.close()
         conn.close()
 
+def get_unassigned_students_for_course(course_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute(
+            """
+            SELECT s.id, s.username, s.group_size_pref
+            FROM enrollments e
+            JOIN students s ON e.student_id = s.id
+            WHERE e.course_id = ?
+              AND s.id NOT IN (
+                  SELECT gm.student_id
+                  FROM group_members gm
+                  JOIN study_groups sg ON gm.group_id = sg.id
+                  WHERE sg.course_id = ?
+              )
+            """,
+            (course_id, course_id)
+        )
+
+        rows = cursor.fetchall()
+
+        students = [
+            {
+                "id": row[0],
+                "username": row[1],
+                "group_size_pref": row[2],
+            }
+            for row in rows
+        ]
+
+        return students
+
+    finally:
+        cursor.close()
+        conn.close()
+
 
         
 

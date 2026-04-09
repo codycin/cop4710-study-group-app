@@ -48,6 +48,8 @@ def create_tables():
             leader_id INTEGER NOT NULL,
             course_id INTEGER NOT NULL,
             group_id INTEGER NOT NULL,
+            date TEXT NOT NULL,
+            description TEXT,
             FOREIGN KEY (leader_id) REFERENCES students(id),
             FOREIGN KEY (course_id) REFERENCES courses(id),
             FOREIGN KEY (group_id) REFERENCES study_groups(id)
@@ -71,7 +73,9 @@ def create_tables():
             course_id INTEGER NOT NULL,
             name TEXT NOT NULL,
             created_at TEXT NOT NULL,
-            FOREIGN KEY (course_id) REFERENCES courses(id)
+            leader_id INTEGER NOT NULL,
+            FOREIGN KEY (course_id) REFERENCES courses(id),
+            FOREIGN KEY (leader_id) REFERENCES students(id)
         )
     """)
     #Appointment attendees
