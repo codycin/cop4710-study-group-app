@@ -7,8 +7,7 @@ from routes.appointment_routes import appointments_bp
 from services.auth_service import get_user_by_id
 from seed import seed_test_data
 from routes.profile_routes import profile_bp
-
-
+from datetime import datetime
 from db import create_tables
 
 app = Flask(__name__)
@@ -38,6 +37,16 @@ def inject_user():
         user = get_user_by_id(user_id)  
 
     return dict(current_user=user)
+
+@app.template_filter('format_date')
+def format_date(value):
+    dt = datetime.strptime(value, "%Y-%m-%d")
+    return dt.strftime("%b %d")  # Apr 09
+
+@app.template_filter('format_time')
+def format_time(value):
+    dt = datetime.strptime(value, "%H:%M")
+    return dt.strftime("%I:%M %p")  # 02:30 PM
 
 if __name__ == "__main__":
     app.run(debug=True)

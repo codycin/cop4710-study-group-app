@@ -45,7 +45,11 @@ content %}
               </thead>
               <tbody>
                 {% for group in groups %}
-                <tr>
+                <tr
+                  data-url="{{ url_for('groups.view', group_id=group['id']) }}"
+                  onclick="window.location = this.dataset.url"
+                  style="cursor: pointer"
+                >
                   <td>{{ group["name"] }}</td>
                   <td>{{ group["course_code"] }}</td>
                   <td>{{ group["course_title"] }}</td>
@@ -58,7 +62,11 @@ content %}
                         name="group_id"
                         value="{{ group['id'] }}"
                       />
-                      <button type="submit" class="btn btn-danger btn-sm">
+                      <button
+                        type="submit"
+                        class="btn btn-danger btn-sm"
+                        onclick="event.stopPropagation()"
+                      >
                         Leave
                       </button>
                     </form>

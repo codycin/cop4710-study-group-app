@@ -1,0 +1,203 @@
+{% extends "base.html" %} {% block title %}Group Detail{% endblock %} {% block
+content %}
+<body class="bg-light">
+  <div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h1 class="h3 mb-1">{{ group["name"] }}</h1>
+        <p class="text-muted mb-0">
+          {{ group["course_code"] }} - {{ group["course_title"] }}
+        </p>
+      </div>
+      <div class="d-flex gap-2">
+        <a
+          href="{{ url_for('groups.my_groups') }}"
+          class="btn btn-outline-secondary"
+        >
+          Back to Groups
+        </a>
+        <form method="POST" action="{{ url_for('groups.leave') }}">
+          <input type="hidden" name="group_id" value="{{ group['id'] }}" />
+          <button type="submit" class="btn btn-outline-danger">Leave</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-lg-5">
+        <div class="card shadow-sm">
+          <div class="card-header">
+            <h2 class="h5 mb-0">Group Information</h2>
+          </div>
+          <div class="card-body">
+            <p class="mb-2"><strong>Group Name:</strong> {{ group["name"] }}</p>
+            <p class="mb-2">
+              <strong>Course:</strong> {{ group["course_code"] }} - {{
+              group["course_title"] }}
+            </p>
+            <p class="mb-2">
+              <strong>Created:</strong> {{ group["created_at"] }}
+            </p>
+            <p class="mb-0">
+              <strong>Leader:</strong>
+              {{ group["leader_username"] }} {% if group["leader_id"] ==
+              current_user_id %}
+              <span class="badge bg-success ms-2">You</span>
+              {% endif %}
+            </p>
+          </div>
+        </div>
+
+        <div class="card shadow-sm mt-4">
+          <div class="card-header">
+            <h2 class="h5 mb-0">Members</h2>
+          </div>
+          <div class="card-body p-0">
+            {% if members %}
+            <div class="table-responsive">
+              <table class="table table-striped mb-0 align-middle">
+                <thead class="table-dark">
+                  <tr>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Major</th>
+                    <th>Role</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for member in members %}
+                  <tr>
+                    <td>{{ member["username"] }}</td>
+                    <td>{{ member["email"] }}</td>
+                    <td>{{ member["major"] or "—" }}</td>
+                    <td>
+                      {% if member["id"] == group["leader_id"] %}
+                      <span class="badge bg-primary">Leader</span>
+                      {% else %}
+                      <span class="badge bg-secondary">Member</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            {% else %}
+            <div class="p-3 text-muted">No members found.</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-7">
+        <div class="card shadow-sm">
+          <div
+            class="card-header d-flex justify-content-between align-items-center"
+          >
+            <h2 class="h5 mb-0">Appointments</h2>
+            <a
+              href="{{ url_for('appointments.my_appointments_page') }}?group_id={{ group['id'] }}"
+              class="btn btn-sm btn-success"
+            >
+              Create Appointment
+            </a>
+          </div>
+          <div class="card-body p-0">
+            {% if appointments %}
+            <div class="table-responsive">
+              <table class="table table-striped mb-0 align-middle">
+                <thead class="table-dark">
+                  <tr>
+                    <th>Title</th>
+                    <th>Date</th>
+                    <th>Start</th>
+                    <th>End</th>
+                    <th>Created By</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for appointment in appointments %}
+                  <tr
+                    data-url="{{ url_for('appointments.view', appointment_id=appointment['id']) }}"
+                    onclick="window.location = this.dataset.url"
+                    style="cursor: pointer"
+                  >
+                    <td>{{ appointment["title"] }}</td>
+                    <td>{{ appointment["date"] | format_date }}</td>
+                    <td>{{ appointment["time"] | format_time }}</td>
+                    <td>{{ appointment["end_time"] | format_time }}</td>
+                    <td>
+                      {{ appointment["leader_username"] }} {% if
+                      appointment["leader_id"] == current_user_id %}
+                      <span class="badge bg-success ms-1">You</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            {% else %}
+            <div class="p-3 text-muted">No appointments scheduled yet.</div>
+            {% endif %}
+          </div>
+        </div>
+
+        {% if is_group_leader %}
+        <div class="card shadow-sm mt-4 border-warning">
+          <div class="card-header bg-warning-subtle">
+            <h2 class="h5 mb-0">Leader Actions</h2>
+          </div>
+          <div class="card-body">
+            <form
+              method="POST"
+              action="{{ url_for('groups.transfer_ownership') }}"
+              class="mb-4"
+            >
+              <input type="hidden" name="group_id" value="{{ group['id'] }}" />
+              <div class="mb-3">
+                <label for="new_leader_id" class="form-label">
+                  Transfer Ownership
+                </label>
+                <select
+                  id="new_leader_id"
+                  name="new_leader_id"
+                  class="form-select"
+                  required
+                >
+                  <option value="">Select a member</option>
+                  {% for member in members %} {% if member["id"] !=
+                  group["leader_id"] %}
+                  <option value="{{ member['id'] }}">
+                    {{ member["username"] }} ({{ member["email"] }})
+                  </option>
+                  {% endif %} {% endfor %}
+                </select>
+              </div>
+              <button type="submit" class="btn btn-primary">
+                Transfer Ownership
+              </button>
+            </form>
+
+            <hr />
+
+            <form
+              method="POST"
+              action="{{ url_for('groups.delete_group') }}"
+              onsubmit="
+                return confirm(
+                  'Are you sure you want to delete this group? This cannot be undone.',
+                );
+              "
+            >
+              <input type="hidden" name="group_id" value="{{ group['id'] }}" />
+              <button type="submit" class="btn btn-danger">Delete Group</button>
+            </form>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endblock %}
+</body>

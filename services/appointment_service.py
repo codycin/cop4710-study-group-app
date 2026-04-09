@@ -3,7 +3,7 @@ import sqlite3
 from flask import session
 
 
-def create_appointment(title, time, end_time, group_id):
+def create_appointment(title, time, end_time, group_id, date):
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -12,7 +12,7 @@ def create_appointment(title, time, end_time, group_id):
         if not student_id:
             return False, "You must be logged in to create an appointment.", None
 
-        if not title or not time or not end_time or not group_id:
+        if not title or not time or not end_time or not group_id or not date:
             return False, "All fields are required.", None
 
         cursor.execute(
@@ -41,10 +41,10 @@ def create_appointment(title, time, end_time, group_id):
 
         cursor.execute(
             """
-            INSERT INTO appointments (title, time, end_time, leader_id, course_id, group_id)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO appointments (title, time, end_time, leader_id, course_id, group_id, date)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
-            (title, time, end_time, student_id, course_id, group_id)
+            (title, time, end_time, student_id, course_id, group_id, date)
         )
         appointment_id = cursor.lastrowid
 
@@ -82,6 +82,7 @@ def get_group_appointments(student_id, search_term=""):
             a.leader_id,
             a.course_id,
             a.group_id,
+            a.date,
             sg.name AS group_name,
             c.code AS course_code,
             c.title AS course_title,
@@ -208,7 +209,7 @@ def leave_appointment(appointment_id, student_id):
             return False, "You must be logged in to leave a group."
 
         cursor.execute(
-            "SELECT id, title FROM appointments WHERE id = ?",
+            "SELECT id, title, leader_id FROM appointments WHERE id = ?",
             (appointment_id,)
         )
         appointment = cursor.fetchone()
@@ -223,7 +224,7 @@ def leave_appointment(appointment_id, student_id):
         student = cursor.fetchone()
 
         if not student:
-            return False, "Student not found."
+            return False, "Student not found."            
 
         cursor.execute(
             """
@@ -238,6 +239,11 @@ def leave_appointment(appointment_id, student_id):
         if not membership:
             return False, "You are not in this group."
 
+        if(student_id == appointment["leader_id"]):
+            return False, "Update appointment leadership."
+
+
+
         cursor.execute(
             """
             DELETE FROM appointment_attendees
@@ -249,6 +255,49 @@ def leave_appointment(appointment_id, student_id):
         conn.commit()
         return True, "You left the appointment."
 
+    finally:
+        cursor.close()
+        conn.close()
+
+def get_appointment_by_id(appointment_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute(
+            """
+            SELECT a.id, a.title, a.time, a.end_time, a.leader_id, a.course_id, a.group_id, a.date, a.description,
+                   sg.name AS group_name, c.code AS course_code, c.title AS course_title
+            FROM appointments a
+            JOIN study_groups sg ON a.group_id = sg.id
+            JOIN courses c ON a.course_id = c.id
+            WHERE a.id = ?
+            """,
+            (appointment_id,)
+        )
+        appointment = cursor.fetchone()
+        return appointment
+
+    finally:
+        cursor.close()
+        conn.close()
+
+def get_appointment_attendees(appointment_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute(
+            """
+            SELECT s.id, s.username, s.email
+            FROM appointment_attendees aa
+            JOIN students s ON aa.student_id = s.id
+            WHERE aa.appointment_id = ?
+            """,
+            (appointment_id,)
+        )
+        attendees = cursor.fetchall()
+        return attendees
     finally:
         cursor.close()
         conn.close()

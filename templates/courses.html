@@ -13,17 +13,28 @@ content %}
         <h5 class="mb-1">{{ course["title"] }}</h5>
         <small class="text-muted">{{ course["code"] }}</small>
       </div>
-
-      <form
-        method="POST"
-        action="{{ url_for('enrollment.unenroll_student_endpoint') }}"
-        class="ms-3"
-      >
-        <input type="hidden" name="course_id" value="{{ course['id'] }}" />
-        <button type="submit" class="btn btn-outline-danger btn-sm">
-          Unenroll
-        </button>
-      </form>
+      <div class="d-flex gap-2">
+        <form
+          method="POST"
+          action="{{ url_for('groups.auto_match') }}"
+          class="ms-3"
+        >
+          <input type="hidden" name="course_id" value="{{ course['id'] }}" />
+          <button type="submit" class="btn btn-outline-primary btn-sm">
+            AUTOMATCH
+          </button>
+        </form>
+        <form
+          method="POST"
+          action="{{ url_for('enrollment.unenroll_student_endpoint') }}"
+          class="ms-3"
+        >
+          <input type="hidden" name="course_id" value="{{ course['id'] }}" />
+          <button type="submit" class="btn btn-outline-danger btn-sm">
+            Unenroll
+          </button>
+        </form>
+      </div>
     </div>
     {% endfor %}
   </ul>
