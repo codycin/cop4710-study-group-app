@@ -29,10 +29,3 @@ python app.py
 ```
 
 The app runs at `http://localhost:5000`. Test data is seeded automatically on startup (120 students, 12 FSU courses). All test accounts use the password `password123`.
-
-## Team
-
-- **Cody Cintron** — Project Manager / Integration Lead
-- **Emilio Morejon** — Database and SQL Lead
-- **Sasha Pernica** — Frontend Development Lead
-- **Thomas Bastidas** — Data Generation and Testing Lead
