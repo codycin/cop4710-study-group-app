@@ -60,6 +60,33 @@ def join_group(student_id, group_id):
         if not student:
             return False, "Student not found."
 
+        # Aggregate COUNT() query — enforce max group capacity
+        # The max size is based on the group leader's group_size_pref
+        cursor.execute(
+            """
+            SELECT s.group_size_pref
+            FROM study_groups sg
+            JOIN students s ON sg.leader_id = s.id
+            WHERE sg.id = ?
+            """,
+            (group_id,)
+        )
+        leader_row = cursor.fetchone()
+        max_size = leader_row["group_size_pref"] if leader_row else 5
+
+        cursor.execute(
+            """
+            SELECT COUNT(*) AS member_count
+            FROM group_members
+            WHERE group_id = ?
+            """,
+            (group_id,)
+        )
+        current_count = cursor.fetchone()["member_count"]
+
+        if current_count >= max_size:
+            return False, f"This group is full ({current_count}/{max_size} members)."
+
         cursor.execute(
             "INSERT INTO group_members (group_id, student_id) VALUES (?, ?)",
             (group_id, student_id)

@@ -7,7 +7,8 @@ from services.appointment_service import (
     get_appointment_by_id,
     get_group_appointments,
     leave_appointment,
-    join_appointment
+    join_appointment,
+    delete_appointment
 )
 from services.group_service import get_my_groups, get_student_courses
 
@@ -112,3 +113,14 @@ def view(appointment_id):
         current_user_id=user_id,
         is_appointment_leader=is_appointment_leader
     )
+
+
+@appointments_bp.route("/delete", methods=["POST"])
+def delete():
+    appointment_id = request.form.get("appointment_id", "").strip()
+    user_id = session.get("user_id")
+
+    success, message = delete_appointment(appointment_id, user_id)
+
+    flash(message, "success" if success else "danger")
+    return redirect(url_for("appointments.my_appointments_page"))

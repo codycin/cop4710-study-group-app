@@ -301,3 +301,46 @@ def get_appointment_attendees(appointment_id):
     finally:
         cursor.close()
         conn.close()
+
+
+def delete_appointment(appointment_id, user_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        if not user_id:
+            return False, "You must be logged in to delete an appointment."
+
+        cursor.execute(
+            "SELECT id, leader_id FROM appointments WHERE id = ?",
+            (appointment_id,)
+        )
+        appointment = cursor.fetchone()
+
+        if not appointment:
+            return False, "Appointment not found."
+
+        if appointment["leader_id"] != user_id:
+            return False, "Only the appointment leader can delete this appointment."
+
+        # Delete attendees first (foreign key dependency)
+        cursor.execute(
+            "DELETE FROM appointment_attendees WHERE appointment_id = ?",
+            (appointment_id,)
+        )
+
+        cursor.execute(
+            "DELETE FROM appointments WHERE id = ?",
+            (appointment_id,)
+        )
+
+        conn.commit()
+        return True, "Appointment deleted successfully."
+
+    except Exception:
+        conn.rollback()
+        return False, "An error occurred while deleting the appointment."
+
+    finally:
+        cursor.close()
+        conn.close()

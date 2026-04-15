@@ -97,13 +97,14 @@ block content %}
 
                 <form
                   method="POST"
-                  action="{{ url_for('appointments.view', appointment_id=appointment['id']) }}"
+                  action="{{ url_for('appointments.delete') }}"
                   onsubmit="
                     return confirm(
                       'Are you sure you want to delete this appointment?',
                     );
                   "
                 >
+                  <input type="hidden" name="appointment_id" value="{{ appointment['id'] }}">
                   <button type="submit" class="btn btn-danger">
                     Delete Appointment
                   </button>
