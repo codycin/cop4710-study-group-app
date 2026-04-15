@@ -8,7 +8,8 @@ from services.appointment_service import (
     get_group_appointments,
     leave_appointment,
     join_appointment,
-    delete_appointment
+    delete_appointment,
+    get_my_appointments
 )
 from services.group_service import get_my_groups, get_student_courses
 
@@ -23,7 +24,7 @@ def my_appointments_page():
         return redirect(url_for("auth.login_endpoint"))
 
     search = request.args.get("search", "").strip()
-    selected_group_id = request.args.get("group_id", type=int)  # 👈 ADD THIS
+    selected_group_id = request.args.get("group_id", type=int)  
 
     appointments = get_group_appointments(user_id, search)
     groups = get_my_groups(user_id)
@@ -35,7 +36,24 @@ def my_appointments_page():
         groups=groups,
         enrolled_courses=enrolled_courses,
         search=search,
-        selected_group_id=selected_group_id  # 👈 PASS TO TEMPLATE
+        selected_group_id=selected_group_id  
+    )
+
+@appointments_bp.route("/my", methods=["GET"])
+def my_appointments():
+    student_id = session.get("user_id")
+
+    if not student_id:
+        flash("You must be logged in to view your appointments.", "danger")
+        return redirect(url_for("auth.login_endpoint"))
+
+    search_term = request.args.get("search", "").strip()
+    appointments = get_my_appointments(student_id, search_term)
+
+    return render_template(
+        "my_appointments.html",
+        appointments=appointments,
+        search_term=search_term
     )
 
 
@@ -77,7 +95,7 @@ def join():
     success, message = join_appointment(appointment_id, user_id)
 
     flash(message, "success" if success else "danger")
-    return redirect(url_for("appointments.my_appointments_page"))
+    return redirect(url_for("appointments.view", appointment_id=appointment_id))
 
 
 @appointments_bp.route("/leave", methods=["POST"])
@@ -111,7 +129,8 @@ def view(appointment_id):
         appointment=appointment,
         members=members,
         current_user_id=user_id,
-        is_appointment_leader=is_appointment_leader
+        is_appointment_leader=is_appointment_leader,
+        is_joined=user_id in [m["id"] for m in members]
     )
 
 

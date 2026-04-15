@@ -1,0 +1,144 @@
+{% extends "base.html" %} {% block title %}Group Analysis{% endblock %} {% block
+content %}
+
+<div class="container mt-4">
+  <h1>Group Analysis for Course {{ course_id }}</h1>
+
+  {% if analysis.success %}
+  <div class="card mb-4">
+    <div class="card-body">
+      <h4>Summary</h4>
+      <p><strong>{{ analysis.summary }}</strong></p>
+      <p><strong>Total Groups:</strong> {{ analysis.group_count }}</p>
+      <p>
+        <strong>Total Memberships:</strong> {{ analysis.total_memberships }}
+      </p>
+      <p>
+        <strong>Average Group Size:</strong> {{ analysis.average_group_size }}
+      </p>
+    </div>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <h4>Size Distribution</h4>
+      {% if analysis.size_distribution %}
+      <ul>
+        {% for size, count in analysis.size_distribution.items() %}
+        <li>Groups of size {{ size }}: {{ count }}</li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p>No size distribution data available.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <h4>Problems Found</h4>
+
+      <p><strong>Duplicate Students:</strong></p>
+      {% if analysis.duplicate_students %}
+      <ul>
+        {% for student in analysis.duplicate_students %}
+        <li>
+          Student {{ student.student_id }} assigned {{ student.times_assigned }}
+          times
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p>None</p>
+      {% endif %}
+
+      <p><strong>Groups With No Members:</strong></p>
+      {% if analysis.groups_with_no_members %}
+      <ul>
+        {% for group_id in analysis.groups_with_no_members %}
+        <li>Group ID {{ group_id }}</li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p>None</p>
+      {% endif %}
+
+      <p><strong>Groups With Invalid Size:</strong></p>
+      {% if analysis.groups_with_invalid_size %}
+      <ul>
+        {% for group in analysis.groups_with_invalid_size %}
+        <li>
+          {{ group.name }} (ID {{ group.group_id }}) has size {{ group.size }}
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p>None</p>
+      {% endif %}
+
+      <p><strong>Groups With Leader Not In Group:</strong></p>
+      {% if analysis.groups_with_leader_not_in_group %}
+      <ul>
+        {% for group in analysis.groups_with_leader_not_in_group %}
+        <li>
+          {{ group.name }} (ID {{ group.group_id }}) leader {{ group.leader_id
+          }} is not a member
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p>None</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <h4>Group Details</h4>
+
+      {% if analysis.group_details %}
+      <table class="table table-bordered table-striped">
+        <thead>
+          <tr>
+            <th>Group ID</th>
+            <th>Name</th>
+            <th>Created At</th>
+            <th>Leader ID</th>
+            <th>Size</th>
+            <th>Members</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for group in analysis.group_details %}
+          <tr>
+            <td>{{ group.group_id }}</td>
+            <td>{{ group.name }}</td>
+            <td>{{ group.created_at }}</td>
+            <td>{{ group.leader_id }}</td>
+            <td>{{ group.size }}</td>
+            <td>
+              {% if group.member_ids %} {{ group.member_ids | join(", ") }} {%
+              else %} No members {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p>No group details available.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  {% else %}
+  <div class="alert alert-danger">
+    <strong>Analysis failed:</strong> {{ analysis.error }}
+  </div>
+  {% endif %}
+
+  <a href="{{ url_for('groups.list_groups') }}" class="btn btn-secondary"
+    >Back to Groups</a
+  >
+</div>
+
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends "base.html" %} {% block title %}My Appointments{% endblock %} {%
+block content %}
+
+<div class="container mt-4">
+  <h1 class="mb-4">My Appointments</h1>
+
+  <a
+    href="{{ url_for('appointments.my_appointments_page') }}"
+    class="btn btn-outline-primary mb-4"
+    >View All Appointments</a
+  >
+
+  <form
+    method="GET"
+    action="{{ url_for('appointments.my_appointments') }}"
+    class="mb-4"
+  >
+    <div style="display: flex; gap: 10px; align-items: center">
+      <input
+        type="text"
+        name="search"
+        value="{{ search_term }}"
+        placeholder="Search by title, group, or course"
+        class="form-control"
+      />
+      <button type="submit" class="btn btn-primary">Search</button>
+      {% if search_term %}
+      <a
+        href="{{ url_for('appointments.my_appointments') }}"
+        class="btn btn-secondary"
+        >Clear</a
+      >
+      {% endif %}
+    </div>
+  </form>
+
+  {% if appointments %}
+  <table class="table table-bordered table-striped">
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Date</th>
+        <th>Start Time</th>
+        <th>End Time</th>
+        <th>Group</th>
+        <th>Course</th>
+        <th>Attendees</th>
+        <th>Joined</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for appt in appointments %}
+      <tr
+        data-url="{{ url_for('appointments.view', appointment_id=appt['id']) }}"
+        onclick="window.location = this.dataset.url"
+        style="cursor: pointer"
+      >
+        <td>{{ appt.title }}</td>
+        <td>{{ appt.date }}</td>
+        <td>{{ appt.time }}</td>
+        <td>{{ appt.end_time }}</td>
+        <td>{{ appt.group_name or "N/A" }}</td>
+        <td>
+          {% if appt.course_code or appt.course_title %} {{ appt.course_code
+          }}{% if appt.course_title %} - {{ appt.course_title }}{% endif %} {%
+          else %} N/A {% endif %}
+        </td>
+        <td>{{ appt.member_count }}</td>
+        <td>
+          {% if appt.is_joined %}
+          <span class="badge bg-success">Yes</span>
+          {% else %}
+          <span class="badge bg-secondary">No</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="alert alert-info">No appointments found.</div>
+  {% endif %}
+</div>
+
+{% endblock %}

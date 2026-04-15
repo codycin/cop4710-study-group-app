@@ -344,3 +344,68 @@ def delete_appointment(appointment_id, user_id):
     finally:
         cursor.close()
         conn.close()
+
+def get_my_appointments(student_id, search_term=""):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    search_term = (search_term or "").strip()
+
+    query = """
+        SELECT
+            a.id,
+            a.title,
+            a.time,
+            a.end_time,
+            a.leader_id,
+            a.course_id,
+            a.group_id,
+            a.date,
+            sg.name AS group_name,
+            c.code AS course_code,
+            c.title AS course_title,
+
+            -- total attendees
+            (
+                SELECT COUNT(*)
+                FROM appointment_attendees aa2
+                WHERE aa2.appointment_id = a.id
+            ) AS member_count,
+
+            -- always 1 now since we're filtering by joined
+            1 AS is_joined
+
+        FROM appointments a
+        LEFT JOIN study_groups sg ON a.group_id = sg.id
+        LEFT JOIN courses c ON a.course_id = c.id
+
+        INNER JOIN appointment_attendees aa
+            ON aa.appointment_id = a.id
+           AND aa.student_id = ?
+    """
+
+    params = [student_id]
+
+    if search_term:
+        query += """
+            WHERE (
+                a.title LIKE ?
+                OR sg.name LIKE ?
+                OR c.code LIKE ?
+                OR c.title LIKE ?
+            )
+        """
+        like_value = f"%{search_term}%"
+        params.extend([like_value, like_value, like_value, like_value])
+
+    query += """
+        ORDER BY a.date DESC, a.time DESC
+    """
+
+    cursor.execute(query, params)
+    rows = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return rows

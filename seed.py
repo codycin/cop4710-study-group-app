@@ -260,10 +260,23 @@ def seed_test_data():
         # 2-5 members from the group attend each appointment
         # =============================================
         attendees = []
-        for appt_idx, (_, _, _, _, _, gid, _, _) in enumerate(appointments, start=1):
+
+        for appt_idx, (_, _, _, appt_leader, _, gid, _, _) in enumerate(appointments, start=1):
             members_list = list(assigned_to_group[gid])
-            num_attending = random.randint(2, min(5, len(members_list)))
-            selected = random.sample(members_list, k=num_attending)
+
+            if len(members_list) < 2:
+                continue
+
+            max_attending = min(5, len(members_list))
+            num_attending = random.randint(2, max_attending)
+
+            remaining_members = [sid for sid in members_list if sid != appt_leader]
+            selected = [appt_leader]
+
+            additional_needed = num_attending - 1
+            if additional_needed > 0:
+                selected.extend(random.sample(remaining_members, k=additional_needed))
+
             for sid in selected:
                 attendees.append((appt_idx, sid))
 

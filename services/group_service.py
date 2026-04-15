@@ -2,7 +2,7 @@ from db import get_db_connection
 import sqlite3
 from datetime import datetime
 from services.student_service import bucket_students_by_pref
-from services.course_service import get_unassigned_students_for_course
+from services.course_service import get_unassigned_students_for_course, get_course_by_id
 
 
 def search_groups(course_code=""):
@@ -64,15 +64,16 @@ def join_group(student_id, group_id):
         # The max size is based on the group leader's group_size_pref
         cursor.execute(
             """
-            SELECT s.group_size_pref
-            FROM study_groups sg
-            JOIN students s ON sg.leader_id = s.id
-            WHERE sg.id = ?
+            SELECT MAX(s.group_size_pref) AS max_pref
+            FROM group_members gm
+            JOIN students s ON gm.student_id = s.id
+            WHERE gm.group_id = ?
             """,
             (group_id,)
         )
-        leader_row = cursor.fetchone()
-        max_size = leader_row["group_size_pref"] if leader_row else 5
+
+        row = cursor.fetchone()
+        max_size = row["max_pref"] if row and row["max_pref"] else 5
 
         cursor.execute(
             """
@@ -182,10 +183,10 @@ def create_group(course_id, name, student_id):
 
         cursor.execute(
             """
-            INSERT INTO study_groups (course_id, name, created_at)
-            VALUES (?, ?, ?)
+            INSERT INTO study_groups (course_id, name, created_at, leader_id)
+            VALUES (?, ?, ?, ?)
             """,
-            (course_id, name, datetime.now().isoformat())
+            (course_id, name, datetime.now().isoformat(), student_id)
         )
         
         group_id = cursor.lastrowid
@@ -198,7 +199,6 @@ def create_group(course_id, name, student_id):
             (group_id, student_id)
         )
 
-        group_id = cursor.lastrowid
         conn.commit()
         return True, "Group created successfully.", group_id
 
@@ -452,7 +452,7 @@ from datetime import datetime
 
 def create_auto_matched_groups(course_id, created_by_user_id):
     students = get_unassigned_students_for_course(course_id)
-
+    course = get_course_by_id(course_id)
     if len(students) < 2:
         return False, "Not enough unassigned students to form groups.", 0
 
@@ -473,7 +473,7 @@ def create_auto_matched_groups(course_id, created_by_user_id):
 
         for index, group in enumerate(groups, start=1):
             leader_id = group[0]["id"]
-            group_name = f"Auto Group {index}"
+            group_name = f"{course['code']} Group {index}"
 
             cursor.execute(
                 """
@@ -510,6 +510,143 @@ def create_auto_matched_groups(course_id, created_by_user_id):
         print(type(students[0]))
         print(students[0])
         return False, f"Auto-match failed: {str(e)}", 0
+
+    finally:
+        cursor.close()
+        conn.close()
+
+def delete_all():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("DELETE FROM appointments")
+    cursor.execute("DELETE FROM group_members")
+    cursor.execute("DELETE FROM study_groups")
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+from collections import Counter
+
+def analyze_auto_matched_groups(course_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        # Get all groups for the course
+        cursor.execute("""
+            SELECT id, name, created_at, leader_id
+            FROM study_groups
+            WHERE course_id = ?
+            ORDER BY id
+        """, (course_id,))
+        groups = cursor.fetchall()
+
+        if not groups:
+            return {
+                "success": True,
+                "course_id": course_id,
+                "group_count": 0,
+                "total_memberships": 0,
+                "average_group_size": 0,
+                "size_distribution": {},
+                "duplicate_students": [],
+                "groups_with_no_members": [],
+                "groups_with_invalid_size": [],
+                "groups_with_leader_not_in_group": [],
+                "group_details": [],
+                "summary": "No study groups found for this course."
+            }
+
+        group_details = []
+        all_student_ids = []
+        groups_with_no_members = []
+        groups_with_invalid_size = []
+        groups_with_leader_not_in_group = []
+
+        for group in groups:
+            group_id = group["id"]
+            group_name = group["name"]
+            leader_id = group["leader_id"]
+            created_at = group["created_at"]
+
+            cursor.execute("""
+                SELECT student_id
+                FROM group_members
+                WHERE group_id = ?
+                ORDER BY student_id
+            """, (group_id,))
+            members = cursor.fetchall()
+
+            member_ids = [m["student_id"] for m in members]
+            size = len(member_ids)
+
+            all_student_ids.extend(member_ids)
+
+            if size == 0:
+                groups_with_no_members.append(group_id)
+
+            # Based on your auto-match logic, final groups should be size 2–5
+            if size < 2 or size > 5:
+                groups_with_invalid_size.append({
+                    "group_id": group_id,
+                    "name": group_name,
+                    "size": size
+                })
+
+            if leader_id not in member_ids:
+                groups_with_leader_not_in_group.append({
+                    "group_id": group_id,
+                    "name": group_name,
+                    "leader_id": leader_id
+                })
+
+            group_details.append({
+                "group_id": group_id,
+                "name": group_name,
+                "created_at": created_at,
+                "leader_id": leader_id,
+                "member_ids": member_ids,
+                "size": size
+            })
+
+        student_counts = Counter(all_student_ids)
+        duplicate_students = [
+            {"student_id": sid, "times_assigned": count}
+            for sid, count in student_counts.items()
+            if count > 1
+        ]
+
+        size_distribution = Counter(g["size"] for g in group_details)
+        total_memberships = len(all_student_ids)
+        group_count = len(group_details)
+        average_group_size = total_memberships / group_count if group_count else 0
+
+        return {
+            "success": True,
+            "course_id": course_id,
+            "group_count": group_count,
+            "total_memberships": total_memberships,
+            "average_group_size": round(average_group_size, 2),
+            "size_distribution": dict(sorted(size_distribution.items())),
+            "duplicate_students": duplicate_students,
+            "groups_with_no_members": groups_with_no_members,
+            "groups_with_invalid_size": groups_with_invalid_size,
+            "groups_with_leader_not_in_group": groups_with_leader_not_in_group,
+            "group_details": group_details,
+            "summary": (
+                f"Found {group_count} groups with {total_memberships} total memberships. "
+                f"Average size: {round(average_group_size, 2)}."
+            )
+        }
+
+    except Exception as e:
+        return {
+            "success": False,
+            "course_id": course_id,
+            "error": str(e)
+        }
 
     finally:
         cursor.close()

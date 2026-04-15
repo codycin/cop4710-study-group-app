@@ -10,36 +10,7 @@ block content %}
             {{ appointment["course_code"] }} - {{ appointment["course_title"] }}
           </p>
         </div>
-        <div class="d-flex gap-2">
-          <a
-            href="{{ url_for('groups.view', group_id=appointment['group_id']) }}"
-            class="btn btn-outline-secondary"
-          >
-            Go to Group
-          </a>
-          <a
-            href="{{ url_for('appointments.my_appointments_page') }}"
-            class="btn btn-outline-primary"
-          >
-            All Appointments
-          </a>
-        </div>
       </div>
-
-      {% with messages = get_flashed_messages(with_categories=true) %} {% if
-      messages %} {% for category, message in messages %}
-      <div
-        class="alert alert-{{ category }} alert-dismissible fade show"
-        role="alert"
-      >
-        {{ message }}
-        <button
-          type="button"
-          class="btn-close"
-          data-bs-dismiss="alert"
-        ></button>
-      </div>
-      {% endfor %} {% endif %} {% endwith %}
 
       <div class="row g-4">
         <div class="col-lg-5">
@@ -63,10 +34,10 @@ block content %}
               </p>
               <p class="mb-2">
                 <strong>Start Time:</strong> {{ appointment["time"] |
-                format_time}}
+                format_time }}
               </p>
               <p class="mb-2">
-                <strong>End Time:</strong> {{ appointment["end_time"]|
+                <strong>End Time:</strong> {{ appointment["end_time"] |
                 format_time }}
               </p>
               <p class="mb-0">
@@ -88,13 +59,6 @@ block content %}
               <p class="text-muted">You are the leader for this appointment.</p>
 
               <div class="d-flex flex-wrap gap-2">
-                <a
-                  href="{{ url_for('appointments.view', appointment_id=appointment['id']) }}"
-                  class="btn btn-primary"
-                >
-                  Edit Appointment
-                </a>
-
                 <form
                   method="POST"
                   action="{{ url_for('appointments.delete') }}"
@@ -104,12 +68,47 @@ block content %}
                     );
                   "
                 >
-                  <input type="hidden" name="appointment_id" value="{{ appointment['id'] }}">
+                  <input
+                    type="hidden"
+                    name="appointment_id"
+                    value="{{ appointment['id'] }}"
+                  />
                   <button type="submit" class="btn btn-danger">
                     Delete Appointment
                   </button>
                 </form>
               </div>
+            </div>
+          </div>
+          {% else %}
+          <div class="card shadow-sm mt-4">
+            <div class="card-header">
+              <h2 class="h5 mb-0">Actions</h2>
+            </div>
+            <div class="card-body">
+              {% if is_joined %}
+              <form method="POST" action="{{ url_for('appointments.leave') }}">
+                <input
+                  type="hidden"
+                  name="appointment_id"
+                  value="{{ appointment['id'] }}"
+                />
+                <button type="submit" class="btn btn-danger">
+                  Leave Appointment
+                </button>
+              </form>
+              {% else %}
+              <form method="POST" action="{{ url_for('appointments.join') }}">
+                <input
+                  type="hidden"
+                  name="appointment_id"
+                  value="{{ appointment['id'] }}"
+                />
+                <button type="submit" class="btn btn-primary">
+                  Join Appointment
+                </button>
+              </form>
+              {% endif %}
             </div>
           </div>
           {% endif %}

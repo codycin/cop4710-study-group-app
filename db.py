@@ -12,24 +12,7 @@ def create_tables():
     cursor = conn.cursor()
 
     cursor.execute("PRAGMA foreign_keys = ON;")
-   #Students
-   # Drop dependent table first
-    cursor.execute("DROP TABLE IF EXISTS appointment_attendees")
 
-# Then drop appointments
-    cursor.execute("DROP TABLE IF EXISTS appointments")
-
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS students (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            email TEXT UNIQUE NOT NULL,
-            password_hash TEXT NOT NULL,
-            major TEXT,
-            role TEXT,
-            group_size_pref INTEGER NOT NULL,
-            username TEXT
-        )
-    """)
     #Courses
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS courses (

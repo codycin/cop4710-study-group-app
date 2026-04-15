@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from services.group_service import create_auto_matched_groups, create_group, is_group_member, search_groups, join_group, get_student_courses, get_my_groups, leave_group, get_group_by_id, get_group_members, get_group_appointments, update_group_leader, delete_group_by_id 
+from services.group_service import analyze_auto_matched_groups, create_auto_matched_groups, create_group, delete_all, is_group_member, search_groups, join_group, get_student_courses, get_my_groups, leave_group, get_group_by_id, get_group_members, get_group_appointments, update_group_leader, delete_group_by_id 
 
 group_bp = Blueprint("groups", __name__, url_prefix="/groups")
 
@@ -25,7 +25,10 @@ def join():
     group_id = request.form.get("group_id")
 
     success, message = join_group(user_id, group_id)
-    flash(message)
+    if success:
+        flash(message, "success")
+    else:
+        flash(message, "danger")
     return redirect(url_for("groups.list_groups"))
 
 @group_bp.route("/leave", methods=["POST"])
@@ -34,7 +37,10 @@ def leave():
     group_id = request.form.get("group_id")
 
     success, message = leave_group(user_id, group_id)
-    flash(message)
+    if success:
+        flash(message, "success")
+    else:
+        flash(message, "danger")
     return redirect(url_for("groups.my_groups"))
 
 
@@ -145,3 +151,18 @@ def auto_match():
     flash(message, "success" if success else "danger")
 
     return redirect(url_for("groups.list_groups", course_id=course_id))
+
+@group_bp.route("/deleteall", methods=["POST"])
+def delete_all_groups():
+    delete_all()
+    flash("All groups deleted successfully.", "success")
+    return redirect(url_for("groups.list_groups"))
+
+
+@group_bp.route("/analyze/<int:course_id>", methods=["GET"])
+def analyze_groups_page(course_id):
+    analysis = analyze_auto_matched_groups(course_id)
+    return render_template("analyze.html", analysis=analysis, course_id=course_id)
+
+
+

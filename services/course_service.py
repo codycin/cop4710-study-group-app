@@ -23,6 +23,35 @@ def createCourse(title,code):
     finally:
         cursor.close()
         conn.close()
+def get_course_by_id(course_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute(
+            """
+            SELECT id, title, code
+            FROM courses
+            WHERE id = ?
+            """,
+            (course_id,)
+        )
+
+        row = cursor.fetchone()
+
+        if row:
+            course = {
+                "id": row[0],
+                "title": row[1],
+                "code": row[2],
+            }
+            return course
+        else:
+            return None
+
+    finally:
+        cursor.close()
+        conn.close()
 
 def get_unassigned_students_for_course(course_id):
     conn = get_db_connection()
