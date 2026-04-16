@@ -37,11 +37,14 @@ def leave():
     group_id = request.form.get("group_id")
 
     success, message = leave_group(user_id, group_id)
+
     if success:
         flash(message, "success")
+        return redirect(url_for("groups.my_groups"))
+
     else:
         flash(message, "danger")
-    return redirect(url_for("groups.my_groups"))
+        return redirect(url_for("groups.view", group_id=group_id))
 
 
 @group_bp.route("/create", methods=["POST"])

@@ -128,7 +128,14 @@ def leave_group(student_id, group_id):
 
         if not student:
             return False, "Student not found."
-
+        
+        cursor.execute(
+            "SELECT 1 FROM study_groups WHERE leader_id = ?",
+            (student_id,)
+        )
+        leader = cursor.fetchone()
+        if leader:
+            return False, "You must transfer leadership before leaving the group."
         cursor.execute(
             """
             SELECT 1

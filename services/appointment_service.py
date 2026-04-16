@@ -240,7 +240,7 @@ def leave_appointment(appointment_id, student_id):
             return False, "You are not in this group."
 
         if(student_id == appointment["leader_id"]):
-            return False, "Update appointment leadership."
+            return False, "Leader can only delete the appointment."
 
 
 

@@ -30,6 +30,7 @@ def create_course_endpoint():
     return redirect (url_for("course.get_all_courses_page"))
 
 @course_bp.route("/my-courses", methods=["GET"])
+
 def get_courses_page():
     student_id = session.get("user_id")
 

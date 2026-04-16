@@ -23,6 +23,7 @@ def createCourse(title,code):
     finally:
         cursor.close()
         conn.close()
+        
 def get_course_by_id(course_id):
     conn = get_db_connection()
     cursor = conn.cursor()

@@ -60,7 +60,6 @@ def unenrollStudent(student_id, course_id):
             "DELETE FROM enrollments WHERE student_id = ? AND course_id = ?",
             (student_id, course_id)
         )
-
         
         if(cursor.rowcount == 0):
             return False, "Student is not in course"
