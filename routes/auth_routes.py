@@ -38,7 +38,7 @@ def register_endpoint():
     
     session["user_id"] = student_id
 
-    return redirect(url_for("courses.get_courses_page"))
+    return redirect(url_for("course.get_courses_page"))
 
 @auth_bp.route("/login", methods=["GET","POST"])
 def login_endpoint():
