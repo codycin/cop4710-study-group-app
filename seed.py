@@ -187,8 +187,14 @@ def seed_test_data():
 
         for gid, (cid, leader_id) in group_info.items():
             pool = [s for s in enrolled_by_course.get(cid, []) if s != leader_id]
-            extra_count = random.randint(2, 5)
-            extras = random.sample(pool, k=min(extra_count, len(pool)))
+
+            # Get the leader's group_size_pref to cap group size
+            leader_index = leader_id - 1  # student ids are 1-indexed
+            leader_pref = students[leader_index][4] if leader_index < len(students) else 4
+
+            # Extra members = pref - 1 (since leader is already in the group)
+            extra_count = min(leader_pref - 1, len(pool))
+            extras = random.sample(pool, k=extra_count)
             members = [leader_id] + extras
 
             assigned_to_group[gid] = set(members)
